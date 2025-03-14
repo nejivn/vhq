@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VHQ - Bảng Xếp Hạng</title>
+    <link rel="stylesheet" href="./styles/leaderstyles.css">
+    <link rel="icon" type="image/png" href="./assets/VHQ - Logo.png">
+</head>
+<body>
+    <nav>
+        <div class="logo-container">
+            <img src="./assets/VHQ - Logo.png" alt="Logo" class="logo">
+            <h1>VHQ</h1>
+        </div>
+        <ul>
+            <li><a href="index.html">Trang Chủ</a></li>
+            <li><a href="quiz.html">Trắc Nghiệm</a></li>
+            <li><a href="profile.html">Hồ Sơ</a></li>
+            <li><button id="logoutBtn">Đăng Xuất</button></li>
+        </ul>
+    </nav>
+
+    <header>
+        <h2>Bảng Xếp Hạng</h2>
+        <p>Danh sách những người chơi có điểm cao nhất.</p>
+    </header>
+
+    <div class="container">
+        <table id="leaderboard">
+            <thead>
+                <tr>
+                    <th>Hạng</th>
+                    <th>Tên Người Dùng</th>
+                    <th>Điểm</th>
+                    <th>Thời Gian</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dữ liệu sẽ được thêm từ JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="./scripts/leaderboard.js"></script>
+</body>
+</html>

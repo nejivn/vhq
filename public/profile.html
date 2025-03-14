@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VHQ - Hồ sơ cá nhân</title>
+    <link rel="stylesheet" href="./styles/profilestyles.css">
+    <link rel="icon" type="image/png" href="./assets/VHQ - Logo.png">
+</head>
+<body>
+    <nav>
+        <div class="logo-container">
+            <img src="./assets/VHQ - Logo.png" alt="Logo" class="logo">
+            <h1>VHQ</h1>
+        </div>
+        <ul>
+            <li><a href="index.html">Trang Chủ</a></li>
+            <li><a href="leaderboard.html">Bảng Xếp Hạng</a></li>
+            <li><a href="quiz.html">Trắc Nghiệm</a></li>
+            <li><button id="logoutBtn">Đăng Xuất</button></li>
+        </ul>
+    </nav>
+
+    <div class="profile-container">
+        <h2>Thông tin tài khoản</h2>
+        <p><strong>Tên người dùng:</strong> <input type="text" id="username" /></p>
+        <p><strong>Email:</strong> <input type="email" id="email" /></p>
+        <button id="saveBtn">Lưu</button>
+    </div>
+
+    <script src="./scripts/profile.js"></script>
+</body>
+</html>
