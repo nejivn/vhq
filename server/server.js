@@ -52,21 +52,39 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
+    // Kiểm tra dữ liệu đầu vào
+    if (!email || !password) {
+        return res.status(400).json({ message: "Vui lòng nhập đầy đủ email và mật khẩu." });
+    }
+
     try {
+        // Truy vấn người dùng từ cơ sở dữ liệu
         const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+
+        // Kiểm tra xem người dùng có tồn tại không
         if (result.rows.length === 0) {
             return res.status(401).json({ message: "Email hoặc mật khẩu không đúng." });
         }
 
         const user = result.rows[0];
+
+        // So sánh mật khẩu
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ message: "Email hoặc mật khẩu không đúng." });
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, "secret", { expiresIn: "24h" });
+        // Tạo token JWT
+        const token = jwt.sign(
+            { id: user.id, username: user.username, role: user.role },
+            "secret", // Secret key (nên sử dụng biến môi trường)
+            { expiresIn: "24h" } // Thời gian hết hạn của token
+        );
+
+        // Trả về token và thông báo thành công
         res.json({ message: "Đăng nhập thành công!", token });
     } catch (err) {
+        console.error("Lỗi khi đăng nhập:", err);
         res.status(500).json({ message: "Lỗi server." });
     }
 });
@@ -406,6 +424,22 @@ app.delete("/admin/competitions/:id", async (req, res) => {
         res.send("Kỳ thi đã bị xóa thành công");
     } catch (err) {
         res.status(500).send("Lỗi khi xóa kỳ thi: " + err.message);
+    }
+});
+
+app.get("/test-db", async (req, res) => {
+    try {
+        // Truy vấn tất cả người dùng từ bảng users
+        const result = await db.query("SELECT * FROM users");
+
+        // Trả về kết quả
+        res.status(200).json({
+            message: "Truy vấn dữ liệu thành công!",
+            data: result.rows,
+        });
+    } catch (err) {
+        console.error("Lỗi khi truy vấn dữ liệu:", err);
+        res.status(500).json({ message: "Lỗi server khi truy vấn dữ liệu." });
     }
 });
 
