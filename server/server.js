@@ -16,61 +16,75 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
-app.post("/register", (req, res) => {
+app.post("/register", async (req, res) => {
     const { username, email, password } = req.body;
+
+    // Kiểm tra dữ liệu đầu vào
     if (!username || !email || !password) {
         return res.status(400).json({ message: "Vui lòng nhập đầy đủ thông tin." });
     }
 
-    bcrypt.hash(password, 10, (err, hash) => {
-        if (err) return res.status(500).json({ message: "Lỗi mã hóa mật khẩu." });
+    try {
+        // Mã hóa mật khẩu
+        const hash = await bcrypt.hash(password, 10);
 
-        const sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-        db.query(sql, [username, email, hash], (err, result) => {
-            if (err) return res.status(500).json({ message: "Lỗi khi đăng ký." });
-            res.json({ message: "Đăng ký thành công!" });
-        });
-    });
+        // Thêm người dùng vào cơ sở dữ liệu
+        const result = await db.query(
+            "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
+            [username, email, hash]
+        );
+
+        // Trả về phản hồi thành công
+        res.status(201).json({ message: "Đăng ký thành công!", user: result.rows[0] });
+    } catch (err) {
+        console.error("Lỗi khi đăng ký:", err);
+
+        // Xử lý lỗi trùng lặp email hoặc username
+        if (err.code === '23505') { // PostgreSQL error code for unique violation
+            return res.status(400).json({ message: "Email hoặc username đã tồn tại." });
+        }
+
+        // Lỗi server khác
+        res.status(500).json({ message: "Lỗi server khi đăng ký." });
+    }
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
-    const sql = "SELECT * FROM users WHERE email = ?";
-    db.query(sql, [email], (err, results) => {
-        if (err || results.length === 0) {
+    try {
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+        if (result.rows.length === 0) {
             return res.status(401).json({ message: "Email hoặc mật khẩu không đúng." });
         }
 
-        const user = results[0];
-        bcrypt.compare(password, user.password, (err, isMatch) => {
-            if (!isMatch) return res.status(401).json({ message: "Email hoặc mật khẩu không đúng." });
+        const user = result.rows[0];
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Email hoặc mật khẩu không đúng." });
+        }
 
-            const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, "secret", { expiresIn: "24h" });
-
-            res.json({ message: "Đăng nhập thành công!", token });
-        });
-    });
+        const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, "secret", { expiresIn: "24h" });
+        res.json({ message: "Đăng nhập thành công!", token });
+    } catch (err) {
+        res.status(500).json({ message: "Lỗi server." });
+    }
 });
 
-
-app.get("/user", (req, res) => {
+app.get("/user", async (req, res) => {
     const token = req.headers.authorization;
     if (!token) return res.status(401).json({ message: "Không có token!" });
 
-    jwt.verify(token, "secret", (err, decoded) => {
-        if (err) return res.status(401).json({ message: "Token không hợp lệ!" });
-
-        const sql = "SELECT username FROM users WHERE id = ?";
-        db.query(sql, [decoded.id], (err, results) => {
-            if (err) return res.status(500).json({ message: "Lỗi server!" });
-
-            if (results.length === 0) return res.status(404).json({ message: "Không tìm thấy người dùng!" });
-
-            res.json({ username: results[0].username });
-        });
-
-    });
+    try {
+        const decoded = jwt.verify(token, "secret");
+        const result = await db.query("SELECT username FROM users WHERE id = $1", [decoded.id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+        }
+        res.json({ username: result.rows[0].username });
+    } catch (err) {
+        res.status(401).json({ message: "Token không hợp lệ!" });
+    }
 });
 
 const authenticateToken = (req, res, next) => {
@@ -87,86 +101,85 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-
 app.get("/userinfo", authenticateToken, async (req, res) => {
     try {
-        db.query("SELECT username, role FROM users WHERE id = ?", [req.user.id], (err, results) => {
-            if (err) {
-                console.error("Lỗi MySQL:", err);
-                return res.status(500).json({ message: "Lỗi server" });
-            }
-
-            if (results.length === 0) {
-                return res.status(404).json({ message: "Người dùng không tồn tại" });
-            }
-
-            const user = results[0];
-            res.json({ username: user.username, role: user.role });
-        });
-    } catch (error) {
-        console.error("Lỗi server:", error);
-        if (!res.headersSent) {
-            res.status(500).json({ message: "Lỗi server" });
+        const result = await db.query("SELECT username, role FROM users WHERE id = $1", [req.user.id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Người dùng không tồn tại" });
         }
+        const user = result.rows[0];
+        res.json({ username: user.username, role: user.role });
+    } catch (err) {
+        console.error("Lỗi server:", err);
+        res.status(500).json({ message: "Lỗi server" });
     }
 });
 
-app.get("/admin/users", authenticateToken, (req, res) => {
+app.get("/admin/users", authenticateToken, async (req, res) => {
     if (req.user.role !== "admin") return res.status(403).json({ message: "Không có quyền truy cập" });
 
-    db.query("SELECT id, username, email, password, role FROM users", (err, rows) => {
-        if (err) {
-            console.error("Lỗi MySQL:", err);
-            return res.status(500).json({ message: "Lỗi server" });
-        }
-
-        res.json(rows);
-    });
+    try {
+        const result = await db.query("SELECT id, username, email, password, role FROM users");
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Lỗi PostgreSQL:", err);
+        res.status(500).json({ message: "Lỗi server" });
+    }
 });
 
-
-app.get("/admin/questions", authenticateToken, (req, res) => {
+app.get("/admin/questions", authenticateToken, async (req, res) => {
     if (req.user.role !== "admin") return res.status(403).json({ message: "Không có quyền truy cập" });
 
-    db.query("SELECT id, question, option_a, option_b, option_c, option_d, correct_option, difficulty, type FROM quizzes", (err, rows) => {
-        if (err) {
-            console.error("Lỗi MySQL:", err);
-            return res.status(500).json({ message: "Lỗi server" });
-        }
-
-        res.json(rows);
-    });
+    try {
+        const result = await db.query("SELECT id, question, option_a, option_b, option_c, option_d, correct_option, difficulty, type FROM quizzes");
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Lỗi PostgreSQL:", err);
+        res.status(500).json({ message: "Lỗi server" });
+    }
 });
 
 app.post("/admin/users", async (req, res) => {
     const { username, email, password, role } = req.body;
-    await db.query("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", [username, email, password, role]);
-    res.status(201).send("Người dùng đã được thêm");
+    try {
+        await db.query("INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4)", [username, email, password, role]);
+        res.status(201).send("Người dùng đã được thêm");
+    } catch (err) {
+        res.status(500).send("Lỗi khi thêm người dùng: " + err.message);
+    }
 });
 
 app.put("/admin/users/:id", async (req, res) => {
     const { username, role } = req.body;
     const { id } = req.params;
-    await db.query("UPDATE users SET username = ?, role = ? WHERE id = ?", [username, role, id]);
-    res.send("Người dùng đã được cập nhật");
+    try {
+        await db.query("UPDATE users SET username = $1, role = $2 WHERE id = $3", [username, role, id]);
+        res.send("Người dùng đã được cập nhật");
+    } catch (err) {
+        res.status(500).send("Lỗi khi cập nhật người dùng: " + err.message);
+    }
 });
 
 app.delete("/admin/users/:id", async (req, res) => {
     const { id } = req.params;
-    await db.query("DELETE FROM users WHERE id = ?", [id]);
-    res.send("Người dùng đã bị xóa");
+    try {
+        await db.query("DELETE FROM users WHERE id = $1", [id]);
+        res.send("Người dùng đã bị xóa");
+    } catch (err) {
+        res.status(500).send("Lỗi khi xóa người dùng: " + err.message);
+    }
 });
 
 app.post("/admin/questions", async (req, res) => {
     try {
         const { question, option_a, option_b, option_c, option_d, correct_option, difficulty, type } = req.body;
         await db.query(
-            "INSERT INTO quizzes (question, option_a, option_b, option_c, option_d, correct_option, difficulty, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO quizzes (question, option_a, option_b, option_c, option_d, correct_option, difficulty, type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
             [question, option_a, option_b, option_c, option_d, correct_option, difficulty, type]
         );
         res.status(201).send("Câu hỏi đã được thêm thành công");
-    } catch (error) {
-        res.status(500).send("Lỗi khi thêm câu hỏi: " + error.message);
+    } catch (err) {
+        res.status(500).send("Lỗi khi thêm câu hỏi: " + err.message);
     }
 });
 
@@ -175,22 +188,22 @@ app.put("/admin/questions/:id", async (req, res) => {
         const { question, option_a, option_b, option_c, option_d, correct_option, difficulty, type } = req.body;
         const { id } = req.params;
         await db.query(
-            "UPDATE quizzes SET question = ?, option_a = ?, option_b = ?, option_c = ?, option_d = ?, correct_option = ?, difficulty = ?, type = ? WHERE id = ?",
+            "UPDATE quizzes SET question = $1, option_a = $2, option_b = $3, option_c = $4, option_d = $5, correct_option = $6, difficulty = $7, type = $8 WHERE id = $9",
             [question, option_a, option_b, option_c, option_d, correct_option, difficulty, type, id]
         );
         res.send("Câu hỏi đã được cập nhật thành công");
-    } catch (error) {
-        res.status(500).send("Lỗi khi cập nhật câu hỏi: " + error.message);
+    } catch (err) {
+        res.status(500).send("Lỗi khi cập nhật câu hỏi: " + err.message);
     }
 });
 
 app.delete("/admin/questions/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        await db.query("DELETE FROM quizzes WHERE id = ?", [id]);
+        await db.query("DELETE FROM quizzes WHERE id = $1", [id]);
         res.send("Câu hỏi đã bị xóa thành công");
-    } catch (error) {
-        res.status(500).send("Lỗi khi xóa câu hỏi: " + error.message);
+    } catch (err) {
+        res.status(500).send("Lỗi khi xóa câu hỏi: " + err.message);
     }
 });
 
@@ -203,157 +216,135 @@ app.post("/save-score", authenticateToken, async (req, res) => {
     }
 
     try {
-        await db.query("INSERT INTO scores (user_id, score) VALUES (?, ?)", [userId, score]);
+        await db.query("INSERT INTO scores (user_id, score) VALUES ($1, $2)", [userId, score]);
         res.json({ message: "Lưu điểm thành công!" });
-    } catch (error) {
-        console.error("Lỗi khi lưu điểm:", error);
+    } catch (err) {
+        console.error("Lỗi khi lưu điểm:", err);
         res.status(500).json({ message: "Lỗi server!" });
     }
 });
 
-app.get("/history", authenticateToken, (req, res) => {
+app.get("/history", authenticateToken, async (req, res) => {
     const userId = req.user.id;
-    console.log(userId)
 
-    db.query(
-        "SELECT score, quiz_date FROM scores WHERE user_id = ? ORDER BY quiz_date DESC",
-        [userId],
-        (error, results) => {
-            if (error) {
-                console.error("Lỗi khi lấy lịch sử làm bài:", error);
-                return res.status(500).json({ message: "Lỗi server!" });
-            }
-
-            res.json(results);
-        }
-    );
+    try {
+        const result = await db.query(
+            "SELECT score, quiz_date FROM scores WHERE user_id = $1 ORDER BY quiz_date DESC",
+            [userId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Lỗi khi lấy lịch sử làm bài:", err);
+        res.status(500).json({ message: "Lỗi server!" });
+    }
 });
 
 app.get("/me", authenticateToken, (req, res) => {
     res.json({ id: req.user.id, username: req.user.username, role: req.user.role });
 });
 
-app.get("/leaderboard", (req, res) => {
-    const sql = `
-        SELECT 
-            RANK() OVER (ORDER BY s.score DESC, s.quiz_date ASC) AS rank,
-            u.id, 
-            u.username, 
-            s.score, 
-            s.quiz_date
-        FROM scores s
-        JOIN users u ON s.user_id = u.id
-    `;
-
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error("Lỗi truy vấn:", err);
-            return res.status(500).json({ error: "Lỗi truy vấn dữ liệu" });
-        }
-        res.json(results);
-    });
+app.get("/leaderboard", async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT 
+                RANK() OVER (ORDER BY s.score DESC, s.quiz_date ASC) AS rank,
+                u.id, 
+                u.username, 
+                s.score, 
+                s.quiz_date
+            FROM scores s
+            JOIN users u ON s.user_id = u.id
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Lỗi truy vấn:", err);
+        res.status(500).json({ error: "Lỗi truy vấn dữ liệu" });
+    }
 });
 
-app.get("/profile", authenticateToken, (req, res) => {
+app.get("/profile", authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
-    db.query("SELECT username, email FROM users WHERE id = ?", [userId], (err, result) => {
-        if (err) {
-            console.error("Lỗi MySQL:", err);
-            return res.status(500).json({ message: "Lỗi server" });
-        }
-
-        if (result.length === 0) {
+    try {
+        const result = await db.query("SELECT username, email FROM users WHERE id = $1", [userId]);
+        if (result.rows.length === 0) {
             return res.status(404).json({ message: "Không tìm thấy người dùng" });
         }
-
-        res.json({ id: req.user.id, username: req.user.username, role: req.user.role, ...result[0] });
-    });
+        res.json({ id: req.user.id, username: req.user.username, role: req.user.role, ...result.rows[0] });
+    } catch (err) {
+        console.error("Lỗi PostgreSQL:", err);
+        res.status(500).json({ message: "Lỗi server" });
+    }
 });
 
-app.put("/profile", authenticateToken, (req, res) => {
+app.put("/profile", authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const { username, email } = req.body;
 
-    db.query(
-        "UPDATE users SET username = ?, email = ? WHERE id = ?",
-        [username, email, userId],
-        (err, result) => {
-            if (err) {
-                console.error("Lỗi MySQL:", err);
-                return res.status(500).json({ message: "Lỗi server" });
-            }
-
-            res.json({ message: "Cập nhật thông tin thành công!" });
-        }
-    );
+    try {
+        await db.query(
+            "UPDATE users SET username = $1, email = $2 WHERE id = $3",
+            [username, email, userId]
+        );
+        res.json({ message: "Cập nhật thông tin thành công!" });
+    } catch (err) {
+        console.error("Lỗi PostgreSQL:", err);
+        res.status(500).json({ message: "Lỗi server" });
+    }
 });
 
 app.post("/admin/competitions", async (req, res) => {
     try {
         const { name, difficulty, question_count } = req.body;
         await db.query(
-            "INSERT INTO competitions (name, difficulty, question_count) VALUES (?, ?, ?)",
+            "INSERT INTO competitions (name, difficulty, question_count) VALUES ($1, $2, $3)",
             [name, difficulty, question_count]
         );
-        res.status(201).send("Câu hỏi đã được thêm thành công");
-    } catch (error) {
-        res.status(500).send("Lỗi khi thêm câu hỏi: " + error.message);
+        res.status(201).send("Kỳ thi đã được thêm thành công");
+    } catch (err) {
+        res.status(500).send("Lỗi khi thêm kỳ thi: " + err.message);
     }
 });
 
-app.get("/admin/competitions", authenticateToken, (req, res) => {
+app.get("/admin/competitions", authenticateToken, async (req, res) => {
     if (req.user.role !== "admin") return res.status(403).json({ message: "Không có quyền truy cập" });
 
-    db.query("SELECT id, name, difficulty, question_count, subject FROM competitions", (err, rows) => {
-        if (err) {
-            console.error("Lỗi MySQL:", err);
-            return res.status(500).json({ message: "Lỗi server" });
-        }
-
-        console.log(rows)
-        res.json(rows);
-    });
+    try {
+        const result = await db.query("SELECT id, name, difficulty, question_count, subject FROM competitions");
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Lỗi PostgreSQL:", err);
+        res.status(500).json({ message: "Lỗi server" });
+    }
 });
 
-app.get("/competitions", (req, res) => {
+app.get("/competitions", async (req, res) => {
     const token = req.headers.authorization;
     if (!token) return res.status(401).json({ message: "Không có token!" });
 
-    jwt.verify(token, "secret", (err) => {
-        if (err) return res.status(401).json({ message: "Token không hợp lệ!" });
-
-        db.query("SELECT * FROM competitions", (err, results) => {
-            if (err) return res.status(500).json({ message: "Lỗi server!" });
-
-            res.json(results);
-        });
-    });
+    try {
+        jwt.verify(token, "secret");
+        const result = await db.query("SELECT * FROM competitions");
+        res.json(result.rows);
+    } catch (err) {
+        res.status(401).json({ message: "Token không hợp lệ!" });
+    }
 });
 
 app.get("/competitions/:id/questions", async (req, res) => {
     try {
         const { id } = req.params;
 
-        const queryPromise = (sql, params = []) => {
-            return new Promise((resolve, reject) => {
-                db.query(sql, params, (err, results) => {
-                    if (err) reject(err);
-                    else resolve(results);
-                });
-            });
-        };
-
-        const competition = await queryPromise(
-            "SELECT difficulty FROM competitions WHERE id = ?",
+        const competition = await db.query(
+            "SELECT difficulty FROM competitions WHERE id = $1",
             [id]
         );
 
-        if (competition.length === 0) {
+        if (competition.rows.length === 0) {
             return res.status(404).json({ error: "Kỳ thi không tồn tại" });
         }
 
-        const competitionDifficulty = competition[0].difficulty;
+        const competitionDifficulty = competition.rows[0].difficulty;
 
         let questionDistribution;
         if (competitionDifficulty === "easy") {
@@ -366,94 +357,57 @@ app.get("/competitions/:id/questions", async (req, res) => {
             return res.status(400).json({ error: "Độ khó kỳ thi không hợp lệ" });
         }
 
-        const easyQuestions = await queryPromise(
-            "SELECT * FROM quizzes WHERE difficulty = 'easy' ORDER BY RAND() LIMIT ?",
+        const easyQuestions = await db.query(
+            "SELECT * FROM quizzes WHERE difficulty = 'easy' ORDER BY RANDOM() LIMIT $1",
             [questionDistribution.easy]
         );
 
-        const mediumQuestions = await queryPromise(
-            "SELECT * FROM quizzes WHERE difficulty = 'medium' ORDER BY RAND() LIMIT ?",
+        const mediumQuestions = await db.query(
+            "SELECT * FROM quizzes WHERE difficulty = 'medium' ORDER BY RANDOM() LIMIT $1",
             [questionDistribution.medium]
         );
 
-        const hardQuestions = await queryPromise(
-            "SELECT * FROM quizzes WHERE difficulty = 'hard' ORDER BY RAND() LIMIT ?",
+        const hardQuestions = await db.query(
+            "SELECT * FROM quizzes WHERE difficulty = 'hard' ORDER BY RANDOM() LIMIT $1",
             [questionDistribution.hard]
         );
 
-        console.log("Easy Questions:", easyQuestions);
-        console.log("Medium Questions:", mediumQuestions);
-        console.log("Hard Questions:", hardQuestions);
-
-        const questions = [...easyQuestions, ...mediumQuestions, ...hardQuestions];
+        const questions = [...easyQuestions.rows, ...mediumQuestions.rows, ...hardQuestions.rows];
 
         if (questions.length === 0) {
             return res.status(404).json({ error: "Không có câu hỏi nào phù hợp" });
         }
 
         res.json({ competition_id: id, difficulty: competitionDifficulty, questions });
-    } catch (error) {
-        console.error("Lỗi khi lấy câu hỏi kỳ thi:", error);
+    } catch (err) {
+        console.error("Lỗi khi lấy câu hỏi kỳ thi:", err);
         res.status(500).json({ error: "Lỗi khi lấy câu hỏi kỳ thi" });
     }
 });
 
 app.put("/admin/competitions/:id", async (req, res) => {
     try {
-        const { name, difficulty, question_count, subject} = req.body;
+        const { name, difficulty, question_count, subject } = req.body;
         const { id } = req.params;
         await db.query(
-            "UPDATE competitions SET name = ?, difficulty = ?, question_count = ?, subject = ? WHERE id = ?",
+            "UPDATE competitions SET name = $1, difficulty = $2, question_count = $3, subject = $4 WHERE id = $5",
             [name, difficulty, question_count, subject, id]
         );
         res.send("Kỳ thi đã được cập nhật thành công");
-    } catch (error) {
-        res.status(500).send("Lỗi khi cập nhật kì thi: " + error.message);
+    } catch (err) {
+        res.status(500).send("Lỗi khi cập nhật kỳ thi: " + err.message);
     }
 });
 
 app.delete("/admin/competitions/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        await db.query("DELETE FROM competitions WHERE id = ?", [id]);
+        await db.query("DELETE FROM competitions WHERE id = $1", [id]);
         res.send("Kỳ thi đã bị xóa thành công");
-    } catch (error) {
-        res.status(500).send("Lỗi khi xóa kì thi: " + error.message);
+    } catch (err) {
+        res.status(500).send("Lỗi khi xóa kỳ thi: " + err.message);
     }
 });
-
-
-
-
-
-
-
-
-
-
-// app.put("/admin/competitions/:id", async (req, res) => {
-//     try {
-//         const { question, option_a, option_b, option_c, option_d, correct_option } = req.body;
-//         const { id } = req.params;
-//         await db.query(
-//             "UPDATE quizzes SET question = ?, option_a = ?, option_b = ?, option_c = ?, option_d = ?, correct_option = ? WHERE id = ?",
-//             [question, option_a, option_b, option_c, option_d, correct_option, id]
-//         );
-//         res.send("Câu hỏi đã được cập nhật thành công");
-//     } catch (error) {
-//         res.status(500).send("Lỗi khi cập nhật câu hỏi: " + error.message);
-//     }
-// });
-
-// app.delete("/admin/competitions/:id", async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         await db.query("DELETE FROM quizzes WHERE id = ?", [id]);
-//         res.send("Câu hỏi đã bị xóa thành công");
-//     } catch (error) {
-//         res.status(500).send("Lỗi khi xóa câu hỏi: " + error.message);
-//     }
-// });
 
 // Chạy server
 const PORT = 3000;
