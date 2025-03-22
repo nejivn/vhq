@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-        const res = await fetch("http://vhq.onrender.com/user", {
+        const res = await fetch("https://vhq.onrender.com/user", {
             method: "GET",
             headers: { Authorization: token }
         });
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-        const res = await fetch("http://vhq.onrender.com/userinfo", {
+        const res = await fetch("https://vhq.onrender.com/userinfo", {
             method: "GET",
             headers: { "Authorization": `Bearer ${token}` }
         });

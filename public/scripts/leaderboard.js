@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const leaderboardBody = document.querySelector("#leaderboard tbody");
 
-    fetch("http://vhq.onrender.com/leaderboard")
+    fetch("https://vhq.onrender.com/leaderboard")
         .then(res => res.json())
         .then(players => {
             leaderboardBody.innerHTML = "";

@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  fetch("http://vhq.onrender.com/me", {
+  fetch("https://vhq.onrender.com/me", {
     headers: { Authorization: `Bearer ${token}` },
   })
     .then((res) => res.json())
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
   function fetchUsers() {
-    fetch("http://vhq.onrender.com/admin/users", {
+    fetch("https://vhq.onrender.com/admin/users", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function fetchQuestions() {
-    fetch("http://vhq.onrender.com/admin/questions", {
+    fetch("https://vhq.onrender.com/admin/questions", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -122,7 +122,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function fetchCompetition() {
-    fetch("http://vhq.onrender.com/admin/competitions", {
+    fetch("https://vhq.onrender.com/admin/competitions", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!username || !email || !password || !role)
       return alert("Vui lòng nhập đầy đủ thông tin!");
 
-    fetch("http://vhq.onrender.com/admin/users", {
+    fetch("https://vhq.onrender.com/admin/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const username = row.children[1].textContent;
     const role = row.children[4].textContent;
 
-    fetch(`http://vhq.onrender.com/admin/users/${id}`, {
+    fetch(`https://vhq.onrender.com/admin/users/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("Pass delte");
     if (!confirm("Bạn có chắc muốn xóa người dùng này?")) return;
 
-    fetch(`http://vhq.onrender.com/admin/users/${id}`, {
+    fetch(`https://vhq.onrender.com/admin/users/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -233,7 +233,7 @@ document.addEventListener("DOMContentLoaded", function () {
     )
       return alert("Vui lòng nhập đầy đủ thông tin!");
 
-    fetch("http://vhq.onrender.com/admin/questions", {
+    fetch("https://vhq.onrender.com/admin/questions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -266,7 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const type = row.children[8].textContent;
     console.log(correct_option);
 
-    fetch(`http://vhq.onrender.com/admin/questions/${id}`, {
+    fetch(`https://vhq.onrender.com/admin/questions/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -290,7 +290,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function deleteQuestion(id) {
     if (!confirm("Bạn có chắc muốn xóa câu hỏi này?")) return;
 
-    fetch(`http://vhq.onrender.com/admin/questions/${id}`, {
+    fetch(`https://vhq.onrender.com/admin/questions/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -308,7 +308,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!name || !difficulty || !question_count)
       return alert("Vui lòng nhập đầy đủ thông tin!");
 
-    fetch("http://vhq.onrender.com/admin/competitions", {
+    fetch("https://vhq.onrender.com/admin/competitions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -333,7 +333,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const subject = row.children[4].textContent;
     console.log(subject)
 
-    fetch(`http://vhq.onrender.com/admin/competitions/${id}`, {
+    fetch(`https://vhq.onrender.com/admin/competitions/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -353,7 +353,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function deleteCompetition(id) {
     if (!confirm("Bạn có chắc muốn kì thi hỏi này?")) return;
 
-    fetch(`http://vhq.onrender.com/admin/competitions/${id}`, {
+    fetch(`https://vhq.onrender.com/admin/competitions/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -439,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function addQuestionsToDatabase(questions) {
     questions.forEach((q) => {
-      fetch("http://vhq.onrender.com/admin/questions", {
+      fetch("https://vhq.onrender.com/admin/questions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

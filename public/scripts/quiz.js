@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         try {
-            const res = await fetch("http://vhq.onrender.com/save-score", {
+            const res = await fetch("httpss://vhq.onrender.com/save-score", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function fetchHistory() {
         try {
-            const res = await fetch("http://vhq.onrender.com/history", {
+            const res = await fetch("httpss://vhq.onrender.com/history", {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -218,7 +218,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function fetchCompetitions() {
         try {
-            const res = await fetch("http://vhq.onrender.com/competitions", {
+            const res = await fetch("httpss://vhq.onrender.com/competitions", {
                 headers: { Authorization: token }
             });
 
@@ -252,7 +252,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function loadCompetition(competitionId) {
         try {
-            const res = await fetch(`http://vhq.onrender.com/competitions/${competitionId}/questions`, {
+            const res = await fetch(`httpss://vhq.onrender.com/competitions/${competitionId}/questions`, {
                 headers: { Authorization: token }
             });
 
