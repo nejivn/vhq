@@ -8,15 +8,14 @@
 }
 
 body {
-    background-color: #ECEFF1; /* Xám nhạt dịu mắt */
+    background-color: #ECEFF1;
     color: #333;
     line-height: 1.6;
     padding-top: 60px;
 }
 
-/* Navigation Bar */
 nav {
-    background-color: #1E2A38; /* Xanh navy */
+    background-color: #1E2A38;
     color: white;
     display: flex;
     justify-content: space-between;
@@ -54,12 +53,11 @@ nav a {
 }
 
 nav a:hover {
-    background-color: #37474F; /* Xám đậm */
+    background-color: #37474F;
 }
 
-/* Logout Button */
 #logoutBtn {
-    background: #D32F2F; /* Đỏ đậm */
+    background: #D32F2F;
     color: white;
     border: none;
     padding: 8px 15px;
@@ -70,11 +68,10 @@ nav a:hover {
 }
 
 #logoutBtn:hover {
-    background: #B71C1C; /* Đỏ tối */
+    background: #B71C1C;
     transform: scale(1.05);
 }
 
-/* Main Section */
 section {
     width: 90%;
     max-width: 1200px;
@@ -86,7 +83,7 @@ section {
 }
 
 h2 {
-    color: #1E2A38; /* Xanh navy */
+    color: #1E2A38; 
     border-bottom: 3px solid #1E2A38;
     padding-bottom: 5px;
     margin-bottom: 15px;
@@ -94,7 +91,6 @@ h2 {
     font-weight: 600;
 }
 
-/* Table Styling */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -104,30 +100,29 @@ table {
 }
 
 table th, table td {
-    border: 1px solid #B0BEC5; /* Xám nhạt */
+    border: 1px solid #B0BEC5;
     padding: 12px;
     text-align: center;
     transition: 0.2s;
 }
 
 table th {
-    background-color: #1E2A38; /* Xanh navy */
+    background-color: #1E2A38; 
     color: white;
     font-weight: 600;
 }
 
 tr:nth-child(even) {
-    background-color: #ECEFF1; /* Xám nhạt */
+    background-color: #ECEFF1; 
 }
 
 tr:hover {
-    background-color: rgba(96, 125, 139, 0.2); /* Xanh nhạt */
+    background-color: rgba(96, 125, 139, 0.2); 
 }
 
-/* Buttons */
 button {
     margin-bottom: 10px;
-    background-color: #607D8B; /* Xanh nhạt */
+    background-color: #607D8B;
     color: white;
     border: none;
     padding: 10px 14px;
@@ -140,7 +135,7 @@ button {
 }
 
 button:hover {
-    background-color: #455A64; /* Xám xanh đậm */
+    background-color: #455A64; 
     transform: scale(1.05);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -149,14 +144,12 @@ button:active {
     transform: scale(0.98);
 }
 
-/* Specific Buttons */
 #addUser, #addQuestion, #addCompetition, #addQuestionFromFile {
     display: block;
     margin: 15px auto;
     width: 200px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     nav {
         flex-direction: column;
@@ -184,6 +177,6 @@ button:active {
 }
 
 .logo {
-    height: 40px; /* Điều chỉnh kích thước logo */
+    height: 40px;
     margin-right: 10px;
 }

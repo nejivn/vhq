@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             loadQuestion(currentQuestionIndex);
         } else {
             congratulationSound.play();
-            saveScore(); // Gọi hàm lưu điểm khi hoàn thành bài kiểm tra
+            saveScore();
         }
     });
 
@@ -50,11 +50,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("score").textContent = `Điểm: ${score}`;
     
         const optionsContainer = document.getElementById("options");
-        optionsContainer.innerHTML = ""; // Xóa nội dung cũ trước khi hiển thị câu hỏi mới
+        optionsContainer.innerHTML = "";
     
         if (questionData.type === "multiple_choice") {
             console.log('pass');
-            // Câu hỏi trắc nghiệm
             const optionsMap = ["a", "b", "c", "d"];
     
             optionsMap.forEach((key) => {
@@ -70,7 +69,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 optionsContainer.appendChild(button);
             });
         } else if (questionData.type === "true_false") {
-            // Câu hỏi Đúng/Sai
             ["Đúng", "Sai"].forEach((text, i) => {
                 const button = document.createElement("button");
                 button.textContent = text;
@@ -91,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         
             const submitButton = document.createElement("button");
             submitButton.textContent = "Xác nhận";
-            submitButton.id = "fill-submit"; // Thêm ID để áp dụng CSS
+            submitButton.id = "fill-submit";
             submitButton.onclick = () => {
                 if (!answered) checkAnswerFillIn(input.value.trim(), questionData.correct_option, questionData.difficulty);
             };
@@ -101,8 +99,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         
         
-    
-        // Cập nhật nội dung của nút tiếp theo
         const nextBtn = document.getElementById("nextBtn");
         if (nextBtn) {
             nextBtn.textContent = index === questions.length - 1 ? "Lưu bài" : "Tiếp theo";
@@ -271,17 +267,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             questions = data.questions;
 
-            // Ẩn danh sách kỳ thi, hiển thị giao diện câu hỏi
             document.getElementById("competition-container").style.display = "none";
             document.getElementById("quiz-container").style.display = "block";
             document.getElementById("score-box").style.display = "block";
 
-            // Khởi tạo trạng thái bài kiểm tra
             currentQuestionIndex = 0;
             score = 0;
             document.getElementById("score").textContent = `Điểm: ${score}`;
 
-            // Hiển thị câu hỏi đầu tiên
             loadQuestion(currentQuestionIndex);
         } catch (error) {
             console.error("Lỗi khi tải câu hỏi kỳ thi:", error);

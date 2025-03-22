@@ -1,18 +1,11 @@
-const mysql = require("mysql");
+const { Pool } = require('pg');
 
-const db = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "quiz_app"
+const pool = new Pool({
+    user: 'your_username',
+    host: 'localhost',
+    database: 'your_database',
+    password: 'your_password',
+    port: 5432,
 });
 
-db.connect((err) => {
-    if (err) {
-        console.error("Lỗi kết nối MySQL:", err);
-    } else {
-        console.log("Kết nối MySQL thành công!");
-    }
-});
-
-module.exports = db;
+module.exports = pool;

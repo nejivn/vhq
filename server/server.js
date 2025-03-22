@@ -331,28 +331,10 @@ app.get("/competitions", (req, res) => {
     });
 });
 
-app.get("/competitionstest", (req, res) => {
-    const token = req.headers.authorization;
-    if (!token) return res.status(401).json({ message: "Không có token!" });
-
-    jwt.verify(token, "secret", (err) => {
-        if (err) return res.status(401).json({ message: "Token không hợp lệ!" });
-
-        db.query("SELECT * FROM quizzes WHERE difficulty = 'easy' ORDER BY RAND() LIMIT 3", (err, results) => {
-            if (err) return res.status(500).json({ message: "Lỗi server!" });
-
-            res.json(results);
-            console.log(results)
-        });
-
-    });
-});
-
 app.get("/competitions/:id/questions", async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Hàm hỗ trợ truy vấn MySQL với Promise
         const queryPromise = (sql, params = []) => {
             return new Promise((resolve, reject) => {
                 db.query(sql, params, (err, results) => {
@@ -362,7 +344,6 @@ app.get("/competitions/:id/questions", async (req, res) => {
             });
         };
 
-        // Lấy thông tin kỳ thi để kiểm tra độ khó
         const competition = await queryPromise(
             "SELECT difficulty FROM competitions WHERE id = ?",
             [id]
@@ -374,7 +355,6 @@ app.get("/competitions/:id/questions", async (req, res) => {
 
         const competitionDifficulty = competition[0].difficulty;
 
-        // Xác định số lượng câu hỏi dựa trên độ khó của kỳ thi
         let questionDistribution;
         if (competitionDifficulty === "easy") {
             questionDistribution = { easy: 12, medium: 5, hard: 3 };
@@ -386,7 +366,6 @@ app.get("/competitions/:id/questions", async (req, res) => {
             return res.status(400).json({ error: "Độ khó kỳ thi không hợp lệ" });
         }
 
-        // Lấy danh sách câu hỏi theo độ khó
         const easyQuestions = await queryPromise(
             "SELECT * FROM quizzes WHERE difficulty = 'easy' ORDER BY RAND() LIMIT ?",
             [questionDistribution.easy]
@@ -402,7 +381,6 @@ app.get("/competitions/:id/questions", async (req, res) => {
             [questionDistribution.hard]
         );
 
-        // Debug dữ liệu truy vấn
         console.log("Easy Questions:", easyQuestions);
         console.log("Medium Questions:", mediumQuestions);
         console.log("Hard Questions:", hardQuestions);

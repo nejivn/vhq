@@ -22,7 +22,7 @@ body {
 }
 
 nav {
-    background-color: #4b23e3; /* Màu xanh đậm theo ảnh */
+    background-color: #4b23e3;
     color: white;
     display: flex;
     justify-content: space-between;
@@ -63,7 +63,7 @@ nav a:hover {
 }
 
 #logoutBtn {
-    background: #ff3b30; /* Màu đỏ nhạt hơn để nổi bật */
+    background: #ff3b30;
     color: white;
     border: none;
     padding: 8px 15px;
@@ -74,7 +74,7 @@ nav a:hover {
 }
 
 #logoutBtn:hover {
-    background: #c62828; /* Đậm hơn khi hover */
+    background: #c62828;
 }
 
 header {
@@ -88,7 +88,7 @@ header {
 }
 
 header h2 {
-    color: #4b23e3; /* Đồng bộ màu với thanh navbar */
+    color: #4b23e3;
     font-size: 24px;
     margin-bottom: 10px;
 }
@@ -104,6 +104,6 @@ header p {
 }
 
 .logo {
-    height: 40px; /* Điều chỉnh kích thước logo */
+    height: 40px;
     margin-right: 10px;
 }

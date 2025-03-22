@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", function () {
     .getElementById("addCompetition")
     .addEventListener("click", addCompetition);
 
-  // Thêm sự kiện cho nút "Thêm câu hỏi từ file Word"
   document
     .getElementById("addQuestionFromFile")
     .addEventListener("click", addQuestionFromFile);
@@ -362,7 +361,6 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((err) => console.error("Lỗi xóa:", err));
   }
 
-  // Thêm chức năng đọc file Word và thêm câu hỏi
   function addQuestionFromFile() {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
@@ -376,9 +374,9 @@ document.addEventListener("DOMContentLoaded", function () {
           mammoth
             .extractRawText({ arrayBuffer: arrayBuffer })
             .then(function (result) {
-              const text = result.value; // Lấy nội dung text từ file Word
-              const questions = parseQuestionsFromText(text); // Phân tích nội dung để lấy các câu hỏi
-              addQuestionsToDatabase(questions); // Thêm các câu hỏi vào cơ sở dữ liệu
+              const text = result.value;
+              const questions = parseQuestionsFromText(text);
+              addQuestionsToDatabase(questions);
             })
             .catch(function (err) {
               console.error("Lỗi đọc file Word:", err);
@@ -397,12 +395,12 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentQuestion = null;
   
     lines.forEach((line) => {
-      line = line.trim(); // Loại bỏ khoảng trắng thừa
+      line = line.trim();
   
       if (line.startsWith("Câu hỏi:")) {
-        // Nếu gặp dòng bắt đầu bằng "Câu hỏi:", tạo một câu hỏi mới
+        
         if (currentQuestion) {
-          questions.push(currentQuestion); // Lưu câu hỏi hiện tại vào mảng
+          questions.push(currentQuestion); 
         }
         currentQuestion = {
           question: line.replace("Câu hỏi:", "").trim(),
@@ -430,13 +428,12 @@ document.addEventListener("DOMContentLoaded", function () {
         currentQuestion.type = line.replace("Dạng câu hỏi:", "").trim();
       }
     });
-  
-    // Lưu câu hỏi cuối cùng vào mảng
+ 
     if (currentQuestion) {
       questions.push(currentQuestion);
     }
   
-    console.log("Danh sách câu hỏi sau khi phân tích:", questions); // Log danh sách câu hỏi
+    console.log("Danh sách câu hỏi sau khi phân tích:", questions);
     return questions;
   }
 
